@@ -6,7 +6,7 @@ integer :: npt
 integer, parameter :: QR_K = selected_real_kind (32)
 real (kind=QR_K), allocatable, dimension(:) :: e, g
 
-integer :: nmax = 30 ! according to Mueller-Plathe and Diercksen Stieltjes is inaccurate for n>=15
+integer :: nmin = 10, nmax = 30 ! according to Mueller-Plathe and Diercksen Stieltjes is inaccurate for n>=15
 !real (kind=QR_K), dimension(0:nmax) :: sk
 !real (kind=QR_K), dimension(nmax,nmax) ::  e1, g1, e2, g2
 real (kind=QR_K), allocatable, dimension(:) :: sk
@@ -25,6 +25,7 @@ real (kind=QR_K) :: temp, pi
 pi = dacos(-1d0)
 
 ! reads and sorts energy and matrix elements
+call Get_Cmdline(nmin, nmax)
 
 read(*,*)npt
 allocate(e(npt),g(npt))
@@ -47,7 +48,7 @@ ishift = 2
     open(237,file=fname)
 
 
-    do inmax = 10, nmax
+    do inmax = nmin, nmax
        allocate(sk(0:inmax))
        allocate(e1(inmax,inmax), g1(inmax,inmax))       
        
@@ -89,3 +90,35 @@ close(237)
 deallocate(e,g)
 
 end program stieltjes
+
+subroutine Get_cmdline(nmin, nmax)
+implicit none
+integer,intent(inout)   :: nmin, nmax
+character(len=100)      :: arg
+integer                 :: i
+
+i=0
+do while (i < command_argument_count())
+  i=i+1
+  call get_command_argument(i, arg)
+  
+  select case (arg)
+  case ('-h')
+     write(*,*)'Call as e.g. stieltjes -i 15 -n 35 < INPUT_FILE'
+     stop 1
+  case ('-i')
+    i=i+1
+    call get_command_argument(i, arg)
+    read(arg,*)nmin  
+  case ('-n')
+    i=i+1
+    call get_command_argument(i, arg)
+    read(arg,*)nmax  
+  case default
+    write(*,*)'Invalid command line argument!'
+    stop 1
+  end select
+
+end do
+
+end subroutine Get_cmdline
